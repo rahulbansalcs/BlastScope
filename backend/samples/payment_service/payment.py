@@ -1,2 +1,2 @@
-def process_payment(order):
-    return {"order":order,"status":"paid"}
+def process_payment(order,currency):
+    return {"order":order,"currency":currency,"status":"paid"}
