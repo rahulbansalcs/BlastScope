@@ -37,7 +37,7 @@ class RepositoryScanner:
             for path in self.get_all_files()
             if path.suffix == ".py"
         ]
-    def count_lines(self, file_path: Path) -> int:
+    def count_lines(self,file_path:Path)->int:
         try:
             with file_path.open("r", encoding="utf-8", errors="ignore") as file:
                 return sum(1 for _ in file)
