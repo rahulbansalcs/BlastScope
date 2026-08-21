@@ -505,7 +505,7 @@ Install:
 ## 1. Clone the Repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/BlastScope.git
+git clone https://github.com/rahulbansalcs/BlastScope.git
 cd BlastScope
 ```
 
