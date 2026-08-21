@@ -6,6 +6,8 @@ from app.parsers.python_parser import PythonParser,ParsedPythonFile
 from app.symbols.symbol_table import SymbolTable
 from app.graph.dependency_graph import DependencyGraph
 from app.graph.graph_builder import GraphBuilder
+from app.graph.api_graph_integrator import ApiGraphIntegrator
+from app.analyzers.api_route_analyzer import ApiRouteAnalyzer
 @dataclass
 class RepositoryAnalysisResult:
     repository:RepositoryInfo
@@ -14,6 +16,7 @@ class RepositoryAnalysisResult:
     graph_nodes:int
     graph_edges:int
     syntax_error_count:int
+    api_route_count:int
     graph:DependencyGraph
 class RepositoryAnalyzer:
     def __init__(self,repository_path:str):
@@ -21,11 +24,15 @@ class RepositoryAnalyzer:
         self.scanner=RepositoryScanner(str(self.repository_path))
         self.parser=PythonParser(str(self.repository_path))
         self.symbol_table=SymbolTable()
+        self.api_route_analyzer=ApiRouteAnalyzer()
     def analyze(self)->RepositoryAnalysisResult:
         repository_info=self.scanner.scan()
         parsed_files=self._parse_files(repository_info.python_files)
         self._build_symbol_table(parsed_files)
         graph=self._build_graph(parsed_files)
+        route_result=self.api_route_analyzer.analyze_repository(str(self.repository_path))
+        api_integrator=ApiGraphIntegrator()
+        graph=api_integrator.integrate(graph,route_result.routes)
         syntax_error_count=sum(1 for parsed_file in parsed_files if parsed_file.syntax_error)
         stats=graph.stats()
         return RepositoryAnalysisResult(
@@ -35,6 +42,7 @@ class RepositoryAnalyzer:
             graph_nodes=stats["nodes"],
             graph_edges=stats["edges"],
             syntax_error_count=syntax_error_count,
+            api_route_count=len(route_result.routes),
             graph=graph
         )
     def _parse_files(self,relative_paths:List[str])->List[ParsedPythonFile]:

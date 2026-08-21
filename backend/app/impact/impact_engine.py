@@ -17,6 +17,7 @@ class ImpactAnalysis:
     affected_files:List[str]=field(default_factory=list)
     affected_functions:List[str]=field(default_factory=list)
     affected_classes:List[str]=field(default_factory=list)
+    affected_endpoints:List[str]=field(default_factory=list)
     total_affected:int=0
     maximum_depth:int=0
 class ImpactEngine:
@@ -32,6 +33,7 @@ class ImpactEngine:
         affected_files=set()
         affected_functions=set()
         affected_classes=set()
+        affected_endpoints=set()
         maximum_depth=0
         for node,depth in impacted:
             component=self._to_component(node,depth)
@@ -46,6 +48,8 @@ class ImpactEngine:
                 affected_functions.add(node.name)
             if node.node_type=="class":
                 affected_classes.add(node.name)
+            if node.node_type=="api_endpoint":
+                affected_endpoints.add(node.name)
         return ImpactAnalysis(
             target_id=node_id,
             target_name=target.name,
@@ -54,6 +58,7 @@ class ImpactEngine:
             affected_files=sorted(affected_files),
             affected_functions=sorted(affected_functions),
             affected_classes=sorted(affected_classes),
+            affected_endpoints=sorted(affected_endpoints),
             total_affected=len(impacted),
             maximum_depth=maximum_depth
         )

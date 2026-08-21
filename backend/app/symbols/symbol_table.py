@@ -45,15 +45,18 @@ class SymbolTable:
             if direct in self.symbols_by_qualified_name:
                 return self.symbols_by_qualified_name[direct]
             alias_target=module.aliases.get(name)
-            if alias_target and alias_target in self.symbols_by_qualified_name:
-                return self.symbols_by_qualified_name[alias_target]
+            if alias_target:
+                resolved=self._resolve_import_target(module_name,alias_target)
+                if resolved:
+                    return resolved
             if "." in name:
                 first,*rest=name.split(".")
                 alias_target=module.aliases.get(first)
                 if alias_target:
                     candidate=".".join([alias_target,*rest])
-                    if candidate in self.symbols_by_qualified_name:
-                        return self.symbols_by_qualified_name[candidate]
+                    resolved=self._resolve_import_target(module_name,candidate)
+                    if resolved:
+                        return resolved
         matches=self.symbols_by_simple_name.get(name,[])
         if len(matches)==1:
             return matches[0]
@@ -65,6 +68,25 @@ class SymbolTable:
         return module.symbols if module else []
     def get_all_symbols(self)->List[Symbol]:
         return list(self.symbols_by_qualified_name.values())
+    def _resolve_import_target(self,current_module:str,target:str)->Optional[Symbol]:
+        if target in self.symbols_by_qualified_name:
+            return self.symbols_by_qualified_name[target]
+        current_parts=current_module.split(".")[:-1]
+        target_parts=target.split(".")
+        while current_parts:
+            candidate=".".join(current_parts+target_parts)
+            if candidate in self.symbols_by_qualified_name:
+                return self.symbols_by_qualified_name[candidate]
+            current_parts.pop()
+        suffix=f".{target}"
+        matches=[
+            symbol
+            for qualified_name,symbol in self.symbols_by_qualified_name.items()
+            if qualified_name.endswith(suffix)
+        ]
+        if len(matches)==1:
+            return matches[0]
+        return None
     def _register_symbol(self,module:ModuleSymbols,symbol:Symbol)->None:
         module.symbols.append(symbol)
         self.symbols_by_qualified_name[symbol.qualified_name]=symbol

@@ -42,7 +42,7 @@ class DependencyGraph:
         return [self.nodes[edge.source] for edge in edges if edge.source in self.nodes]
     def get_direct_impact(self,node_id:str,allowed_edge_types:Optional[Set[str]]=None)->List[DependencyNode]:
         if allowed_edge_types is None:
-            allowed_edge_types={"calls","imports"}
+            allowed_edge_types={"calls","imports","routes_to"}
         edges=self.incoming.get(node_id,[])
         return [
             self.nodes[edge.source]
@@ -53,7 +53,7 @@ class DependencyGraph:
         if node_id not in self.nodes:
             return []
         if allowed_edge_types is None:
-            allowed_edge_types={"calls","imports"}
+            allowed_edge_types={"calls","imports","routes_to"}
         visited:Set[str]={node_id}
         queue:List[Tuple[str,int]]=[(node_id,0)]
         impacted:List[Tuple[DependencyNode,int]]=[]

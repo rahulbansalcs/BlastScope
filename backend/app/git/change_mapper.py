@@ -37,19 +37,18 @@ class ChangeMapper:
             path=Path(parsed_file.file_path).resolve()
             try:
                 relative=path.relative_to(self.repository_path)
-                index[str(relative)]=parsed_file
+                normalized=self._normalize_path(str(relative))
+                index[normalized]=parsed_file
             except ValueError:
                 continue
         return index
     def _normalize_path(self,path:str)->str:
-        normalized=Path(path)
-        parts=normalized.parts
-        if parts and parts[0]=="backend":
-            normalized=Path(*parts[1:])
-        return str(normalized)
+        return str(Path(path))
     def _map_file_symbols(self,changed_file:ChangedFile,parsed_file:ParsedPythonFile)->List[ChangedSymbol]:
         changed_symbols=[]
         if changed_file.change_type=="deleted":
+            return changed_symbols
+        if not changed_file.changed_lines:
             return changed_symbols
         for function in parsed_file.functions:
             if self._symbol_changed(function.line_start,function.line_end,changed_file):
