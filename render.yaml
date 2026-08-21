@@ -2,7 +2,7 @@ services:
   - type: web
     name: blastscope-api
     runtime: python
-    plan: starter
+    plan: free
     rootDir: backend
     buildCommand: pip install -r requirements.txt
     preDeployCommand: python -m app.db.init_db
@@ -11,53 +11,20 @@ services:
     envVars:
       - key: ENVIRONMENT
         value: production
+      - key: USE_JOB_QUEUE
+        value: "false"
       - key: DATABASE_URL
         fromDatabase:
           name: blastscope-db
-          property: connectionString
-      - key: REDIS_URL
-        fromService:
-          type: keyvalue
-          name: blastscope-redis
           property: connectionString
       - key: CORS_ORIGINS
         sync: false
       - key: MAX_REPOSITORY_SIZE_MB
-        value: "200"
-      - key: ANALYSIS_TIMEOUT_SECONDS
-        value: "1800"
-      - key: GIT_CLONE_DEPTH
         value: "100"
-  - type: worker
-    name: blastscope-worker
-    runtime: python
-    plan: starter
-    rootDir: backend
-    buildCommand: pip install -r requirements.txt
-    startCommand: python worker.py
-    envVars:
-      - key: ENVIRONMENT
-        value: production
-      - key: DATABASE_URL
-        fromDatabase:
-          name: blastscope-db
-          property: connectionString
-      - key: REDIS_URL
-        fromService:
-          type: keyvalue
-          name: blastscope-redis
-          property: connectionString
-      - key: MAX_REPOSITORY_SIZE_MB
-        value: "200"
       - key: ANALYSIS_TIMEOUT_SECONDS
-        value: "1800"
+        value: "900"
       - key: GIT_CLONE_DEPTH
-        value: "100"
-  - type: keyvalue
-    name: blastscope-redis
-    plan: starter
-    ipAllowList: []
-    maxmemoryPolicy: noeviction
+        value: "50"
   - type: web
     name: blastscope-frontend
     runtime: static
@@ -73,6 +40,6 @@ services:
         sync: false
 databases:
   - name: blastscope-db
-    plan: basic-256mb
+    plan: free
     databaseName: blastscope
     user: blastscope

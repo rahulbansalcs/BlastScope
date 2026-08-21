@@ -1,4 +1,6 @@
 import uuid
+import os
+from fastapi import APIRouter,BackgroundTasks,Depends,HTTPException,Query
 from datetime import datetime
 from typing import Optional,List
 from fastapi import APIRouter,Depends,HTTPException,Query
@@ -53,7 +55,7 @@ class JobListResponse(BaseModel):
     offset:int
     jobs:List[JobListItem]
 @router.post("",response_model=JobResponse)
-def create_job(request:CreateJobRequest,session:Session=Depends(get_session)):
+def create_job(request:CreateJobRequest,background_tasks:BackgroundTasks,session:Session=Depends(get_session)):
     try:
         service=AnalysisJobService(session)
         job=service.create_job(
@@ -61,14 +63,18 @@ def create_job(request:CreateJobRequest,session:Session=Depends(get_session)):
             base_ref=request.base_ref,
             target_ref=request.target_ref
         )
-        queue=get_analysis_queue()
-        queue.enqueue(
-            execute_analysis_job,
-            str(job.id),
-            job_timeout=1800,
-            result_ttl=3600,
-            failure_ttl=86400
-        )
+        use_job_queue=os.getenv("USE_JOB_QUEUE","true").lower()=="true"
+        if use_job_queue:
+            queue=get_analysis_queue()
+            queue.enqueue(
+                execute_analysis_job,
+                str(job.id),
+                job_timeout=1800,
+                result_ttl=3600,
+                failure_ttl=86400
+            )
+        else:
+            background_tasks.add_task(execute_analysis_job,str(job.id))
         return job
     except Exception as error:
         raise HTTPException(status_code=500,detail=str(error)) from error
