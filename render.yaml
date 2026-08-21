@@ -13,9 +13,7 @@ services:
       - key: USE_JOB_QUEUE
         value: "false"
       - key: DATABASE_URL
-        fromDatabase:
-          name: blastscope-db
-          property: connectionString
+        sync: false
       - key: CORS_ORIGINS
         sync: false
       - key: MAX_REPOSITORY_SIZE_MB
@@ -24,6 +22,7 @@ services:
         value: "900"
       - key: GIT_CLONE_DEPTH
         value: "50"
+
   - type: web
     name: blastscope-frontend
     runtime: static
@@ -37,8 +36,3 @@ services:
     envVars:
       - key: VITE_API_URL
         sync: false
-databases:
-  - name: blastscope-db
-    plan: free
-    databaseName: blastscope
-    user: blastscope
